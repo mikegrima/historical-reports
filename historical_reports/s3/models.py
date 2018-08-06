@@ -1,21 +1,21 @@
 """
 .. module: historical_reports.s3.models
     :platform: Unix
-    :copyright: (c) 2017 by Netflix Inc., see AUTHORS for more
+    :copyright: (c) 2018 by Netflix Inc., see AUTHORS for more
     :license: Apache, see LICENSE for more details.
 .. author:: Mike Grima <mgrima@netflix.com>
 """
+import logging
+from datetime import datetime
 from marshmallow import Schema, fields
 from marshmallow.fields import Field
-from datetime import datetime
 
-from historical_reports.s3.config import CONFIG
-
-import logging
+from historical.constants import LOGGING_LEVEL
+from historical_reports.common.constants import REPORTS_VERSION, EXCLUDE_FIELDS
 
 logging.basicConfig()
 log = logging.getLogger('historical-reports-s3')
-log.setLevel(logging.INFO)
+log.setLevel(LOGGING_LEVEL)
 
 
 def get_generated_time(*args):
@@ -27,7 +27,7 @@ def _serialize_bucket(bucket, account_id, region):
     bucket["Region"] = region
 
     # Remove fields in the exclusion list:
-    for e in CONFIG.exclude_fields:
+    for e in EXCLUDE_FIELDS:
         bucket.pop(e, None)
 
     return bucket
@@ -50,7 +50,7 @@ class BucketField(Field):
 
 
 class S3ReportSchema(Schema):
-    s3_report_version = fields.Int(dump_only=True, required=True, default=CONFIG.s3_reports_version)
+    report_version = fields.Int(dump_only=True, required=True, default=REPORTS_VERSION['s3'])
     generated_date = fields.Function(get_generated_time, required=True)
     all_buckets = BucketField(required=True, dump_to="buckets")
     buckets = BucketField(required=True, load_from="buckets", load_only=True)

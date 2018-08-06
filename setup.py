@@ -23,7 +23,7 @@ with open(os.path.join(ROOT, "historical_reports", "__about__.py")) as f:
 
 
 install_requires = [
-    'historical>=0.3.8',
+    'historical>=0.3.12',
     'retrying==1.3.3',
     'click==6.7'
 ]
@@ -54,7 +54,7 @@ setup(
     },
     entry_points={
         'console_scripts': [
-            's3report = historical_reports.s3.cli:cli',
+            'report = historical_reports.cli:cli'
         ]
     },
     keywords=['aws', 'account_management', "s3"]

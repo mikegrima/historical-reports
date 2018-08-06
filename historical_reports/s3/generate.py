@@ -8,30 +8,33 @@
 import json
 import logging
 
+from historical.constants import LOGGING_LEVEL
 from historical.s3.models import CurrentS3Model
 
+from historical_reports.common.util import dump_to_s3
 from historical_reports.s3.models import S3ReportSchema
-from historical_reports.s3.util import dump_to_s3
 
 logging.basicConfig()
 log = logging.getLogger('historical-reports-s3')
-log.setLevel(logging.WARNING)
+log.setLevel(LOGGING_LEVEL)
 
 
-def dump_report(commit=True):
+def dump_report(dump_buckets, dump_prefix, commit=True):
     # Get all the data from DynamoDB:
-    log.debug("Starting... Beginning scan.")
+    log.debug("[ ] Beginning DynamoDB scan...")
     all_buckets = CurrentS3Model.scan()
 
     generated_file = S3ReportSchema(strict=True).dump({"all_buckets": all_buckets}).data
 
     # Dump to S3:
     if commit:
-        log.debug("Saving to S3.")
+        log.debug("[-->] Saving to S3.")
 
         # Replace <empty> with "" <-- Due to Pynamo/Dynamo issues...
-        dump_to_s3(json.dumps(generated_file, indent=4).replace("\"<empty>\"", "\"\"").encode("utf-8"))
+        # Need to add the file, and the prefix:
+        file = json.dumps(generated_file, indent=4).replace("\"<empty>\"", "\"\"").encode("utf-8")
+        dump_to_s3(dump_buckets, file, dump_prefix)
     else:
-        log.debug("Commit flag not set, not saving.")
+        log.debug("[/] Commit flag not set, not saving.")
 
-    log.debug("Completed S3 report generation.")
+    log.debug("[@] Completed S3 report generation.")
